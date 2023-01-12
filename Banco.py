@@ -1,21 +1,19 @@
 from abc import ABC, abstractmethod
 
 
-class Pessoa(ABC):
+class Pessoa():
     def __init__(self,name=None,age=None):
         self._name = name
         self._age = age
 
     @property
-    @abstractmethod
     def name(self): ...
 
     @property
-    @abstractmethod
     def age(self): ...
 
     def __repr__(self):
-        return f'{ self.__class__.__name__} ({self._name},{self._age})'
+        return f'{ self.__class__.__name__} ({self._name!r},{self._age!r})'
 #Pessoa (Vilner César, 21)
 
 class Conta(ABC):
@@ -28,13 +26,15 @@ class Conta(ABC):
     def bank_balance(self):
         return self._bank_balance
 
+    @abstractmethod
+    def withdraw_money(self,valor): ...
+    
     def deposit(self,value):
         self._bank_balance += value
    
     def account_add(self,agency,number_account): ...
 
-    @abstractmethod
-    def withdraw_money(self,valor): ...
+
 
     def __repr__(self):
         return f'{ self.__class__.__name__} (Agência = {self.agency} ,Número da Conta = {self.number_account}, Saldo = {self._bank_balance})'
@@ -176,23 +176,43 @@ class Banco:
         return True    
             
 
+    def deposit_bank(self,obj_client,accountType,valor):
+        
+        if accountType.upper() == 'CC':
 
+            if self.authenticate(obj_client,accountType):
+                obj_client.bank_accountCorrente.deposit(valor)
+                print(f'Parabéns, você acabou de despositar {valor}. Seu saldo é: {obj_client.bank_accountCorrente.bank_balance} ')
+            
+            else:
+                print('Não foi possível realizar o deposito. Usuário não atenticado, tente novamente mais tarde.')
+        
+        if accountType.upper() == 'CP':
+
+            if self.authenticate(obj_client,accountType):
+                obj_client.bank_accountPupanca.deposit(valor)
+                print(f'Parabéns, você acabou de despositar {valor}R$. Seu saldo é: {obj_client.bank_accountPupanca.bank_balance}R$')
+            
+            else:
+                print('Não foi possível realizar o deposito. Usuário não atenticado, tente novamente mais tarde.')
+        
                     
            
 
     def withdraw_moneyBank(self,obj_client ,accoutType,value):
+        
         if accoutType.upper() == 'CC':
             
             if self.authenticate(obj_client,accoutType):   
                 obj_client.bank_accountCorrente.withdraw_money(value)
-                print(f'Saque liberado, você sacou {value} R$')
+                print(f'Saque liberado, você sacou {value}R$')
             else:
                 print(f'Você não realizar um saque nesse banco. Usuário não autenticado')
         
         if accoutType.upper() == 'CP':
             if self.authenticate(obj_client,accoutType):   
                 if obj_client.bank_accountPupanca.withdraw_money(value):
-                    print(f'Saque liberado, você sacou {value} R$')
+                    print(f'Saque liberado, você sacou {value}R$')
                 else: 
                     print(f'Saque não realizado')
             else:
@@ -210,8 +230,7 @@ cliente2 = Cliente('seu João', 45)
 banco = Banco()
 banco.create_ContaPoupanca(cliente, 527840)
 
-cliente.bank_accountPupanca.deposit(99)
+banco.deposit_bank(cliente,'CP',100)
 banco.withdraw_moneyBank(cliente,'CP',100)
-
-
-
+banco.withdraw_moneyBank(cliente,'CP',0.5)
+print(cliente)
