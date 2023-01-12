@@ -28,13 +28,13 @@ class Conta(ABC):
     def bank_balance(self):
         return self._bank_balance
 
-    def deposit(self,bank_balance):
-        self._bank_balance = bank_balance
+    def deposit(self,value):
+        self._bank_balance += value
    
     def account_add(self,agency,number_account): ...
 
     @abstractmethod
-    def _withdraw_money(self,valor): ...
+    def withdraw_money(self,valor): ...
 
     def __repr__(self):
         return f'{ self.__class__.__name__} (Agência = {self.agency} ,Número da Conta = {self.number_account}, Saldo = {self._bank_balance})'
@@ -43,8 +43,8 @@ class Cliente(Pessoa):
     
     def __init__(self, name=None, age=None):
         super().__init__(name, age)
-        self.bank_accountPupanca: Conta = None
-        self.bank_accountCorrente: Conta = None
+        self.bank_accountPupanca = None
+        self.bank_accountCorrente = None
 
     
     @property
@@ -81,13 +81,15 @@ class ContaCorrente(Conta):
         else:
             return True
 
-    def _withdraw_money(self,valor):
+    def withdraw_money(self,valor):
     
         if self.check_withdraw(valor):
             self._limit -= valor
             self._bank_balance -= valor
+            return True
         else:
             print(f'Desculpe, você não pode sacar esse valor. Seu saldo é {self.bank_balance} \n' , f'limite: {self._limit}')
+            return False
 
     
 class ContaPoupanca(Conta):
@@ -100,16 +102,18 @@ class ContaPoupanca(Conta):
         else:
             return True
 
-    def _withdraw_money(self,valor):
+    def withdraw_money(self,valor):
         if self.check_withdraw(valor):
             self._bank_balance -= valor
+            return True
         else:
-            print(f'Desculpe, você não pode sacar esse valor. Seu saldo é: {self.bank_balance}') 
+            print(f'Desculpe, você não pode sacar esse valor. Seu saldo é: {self.bank_balance}')
+            return False 
 
 class Banco:
     def __init__(self):
         self.name = 'Banco Do Vilneco'
-        self.bank_angency = '1668-3'
+        self.bank_angency = 16683
         self.bank_accounts = []
         self.clients = []
 
@@ -117,6 +121,7 @@ class Banco:
         agency = self.bank_angency
         conta = ContaPoupanca(agency,number_account)
         self.clients.append(obj_client)
+        self.bank_accounts.append(conta)
         obj_client.bank_accountPupanca = conta
         
     
@@ -127,30 +132,73 @@ class Banco:
         self.bank_accounts.append(conta)
         obj_client.bank_accountCorrente = conta
 
-    def authenticate(self,obj_client: Cliente,accoutType):
+    def check_client_MyBank(self,client: Cliente):
+
+        for client_myBank in self.clients:
+            if  client_myBank.name == client.name:
+                return True
+   
+    def check_accountMyBankCorrente(self,obj_client):
+        for account in self.bank_accounts:
+            if obj_client.bank_accountCorrente.number_account == account.number_account:
+                return False
+
+    def check_accountMyBankPoupanca(self,obj_client):
+        for account in self.bank_accounts:
+            if obj_client.bank_accountCorrente.number_account == account.number_account:
+                return False
+    
+    def authenticate(self,obj_client,accoutType):
+        if accoutType.upper() != 'CC' and accoutType.upper() != 'CP':
+            print(accoutType.upper())
+            return False
 
         if accoutType.upper() == 'CC':
             if obj_client.bank_accountCorrente == None:
-                print('entrei aqui')
                 return False
-            if not obj_client.bank_accountCorrente.agency == self.bank_angency:
+  
+            if not self.check_client_MyBank(obj_client):
                 return False
-            if not obj_client in self.clients:
+            
+            if obj_client.bank_accountCorrente.agency != self.bank_angency:
                 return False
-            if not obj_client.bank_accountCorrente in self.bank_accounts:
-               
-                return False
-            return True
-
         
+        if accoutType.upper() == 'CP':
+            if obj_client.bank_accountPupanca == None:
+                return False
+  
+            if not self.check_client_MyBank(obj_client):
+                return False
+            
+            if obj_client.bank_accountPupanca.agency != self.bank_angency:
+                return False
+       
+        return True    
+            
 
-     
-    def withdraw_moneyBank(self,obj_client: Cliente ,accoutType,value):
+
+                    
+           
+
+    def withdraw_moneyBank(self,obj_client ,accoutType,value):
         if accoutType.upper() == 'CC':
-            if self.authenticate(obj_client,accoutType):
-                obj_client.bank_accountCorrente._withdraw_money(value)
+            
+            if self.authenticate(obj_client,accoutType):   
+                obj_client.bank_accountCorrente.withdraw_money(value)
+                print(f'Saque liberado, você sacou {value} R$')
             else:
                 print(f'Você não realizar um saque nesse banco. Usuário não autenticado')
+        
+        if accoutType.upper() == 'CP':
+            if self.authenticate(obj_client,accoutType):   
+                if obj_client.bank_accountPupanca.withdraw_money(value):
+                    print(f'Saque liberado, você sacou {value} R$')
+                else: 
+                    print(f'Saque não realizado')
+            else:
+                print(f'Você não realizar um saque nesse banco. Usuário não autenticado')
+
+        
 
     def __repr__(self):
         return f'Banco: {self.name} \n Agência: {self.bank_angency} \n Clientes que possuem conta nesse banco: {self.clients}'
@@ -160,5 +208,10 @@ cliente = Cliente('Vilner César', 21)
 cliente2 = Cliente('seu João', 45)
 
 banco = Banco()
-banco.create_ContaCorrente(cliente, '58784-X')
-banco.withdraw_moneyBank(cliente,'cc',100)
+banco.create_ContaPoupanca(cliente, 527840)
+
+cliente.bank_accountPupanca.deposit(99)
+banco.withdraw_moneyBank(cliente,'CP',100)
+
+
+
