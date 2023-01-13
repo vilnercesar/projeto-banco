@@ -111,11 +111,11 @@ class ContaPoupanca(Conta):
             return False 
 
 class Banco:
-    def __init__(self):
+    def __init__(self,name = '',bank_angency = 16683,bank_accounts: list[Conta] | None = None,clients: list[Cliente] | None = None):
         self.name = 'Banco Do Vilneco'
-        self.bank_angency = 16683
-        self.bank_accounts = []
-        self.clients = []
+        self.bank_angency = bank_angency 
+        self.bank_accounts =  bank_accounts or []
+        self.clients = clients or []
 
     def create_ContaPoupanca(self,obj_client,number_account):
         agency = self.bank_angency
